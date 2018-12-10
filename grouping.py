@@ -124,17 +124,27 @@ def trace_equivalency_chain(cand, cand_list):
 			break
 
 def plot_cands(old_cands, new_cands, args):
-	fig = plt.figure(figsize=(18,5))
+	plt.style.use('dark_background')
+	colourmap='autumn'
+	marker_size = 5
 
-	# Before grouping
-	ax = fig.add_subplot(131, projection='3d')
+	fig = plt.figure(figsize=(18, 24))
 
 	old_t = [ cand[t] for cand in old_cands ]
 	old_dm = [ cand[dm] for cand in old_cands ]
 	old_w = [ cand[w] for cand in old_cands ]
 	old_sn = [ cand[sn] for cand in old_cands ]
 
-	ax.scatter(old_t, old_dm, old_w, c=old_sn, cmap='winter')
+	new_t = [ cand[t] for cand in new_cands ]
+	new_dm = [ cand[dm] for cand in new_cands ]
+	new_w = [ cand[w] for cand in new_cands ]
+	new_sn = [ cand[sn] for cand in new_cands ]
+
+	# Before grouping
+	ax = fig.add_subplot(431, projection='3d')
+
+	ax.scatter(old_t, old_dm, old_w, c=old_sn, cmap=colourmap)
+	ax.scatter(new_t, new_dm, new_w, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
 
 	ax.set_xlabel("Time (number of samples)")
 	ax.set_ylabel("DM (pc cm^-3)")
@@ -145,15 +155,15 @@ def plot_cands(old_cands, new_cands, args):
 	ax.set_zlim([min(old_w)-args.wtol, max(old_w)+args.wtol])
 
 	# Before grouping with error bars
-	ax = fig.add_subplot(132, projection='3d')
+	ax = fig.add_subplot(432, projection='3d')
 
-	ax.scatter(old_t, old_dm, old_w, c=old_sn, cmap='winter')
+	ax.scatter(old_t, old_dm, old_w, c=old_sn, cmap=colourmap)
 
 	# Error bars
 	for i in range(len(old_t)):
-		ax.plot([old_t[i]+args.ttol, old_t[i]-args.ttol], [old_dm[i], old_dm[i]], [old_w[i], old_w[i]], marker="_", c="black", alpha=0.1)
-		ax.plot([old_t[i], old_t[i]], [old_dm[i]+args.dmtol, old_dm[i]-args.dmtol], [old_w[i], old_w[i]], marker="_", c="black", alpha=0.1)
-		ax.plot([old_t[i], old_t[i]], [old_dm[i], old_dm[i]], [old_w[i]+args.wtol, old_w[i]-args.wtol], marker="_", c="black", alpha=0.1)
+		ax.plot([old_t[i]+args.ttol, old_t[i]-args.ttol], [old_dm[i], old_dm[i]], [old_w[i], old_w[i]], marker="_", c='white', alpha=0.1)
+		ax.plot([old_t[i], old_t[i]], [old_dm[i]+args.dmtol, old_dm[i]-args.dmtol], [old_w[i], old_w[i]], marker="_", c='white', alpha=0.1)
+		ax.plot([old_t[i], old_t[i]], [old_dm[i], old_dm[i]], [old_w[i]+args.wtol, old_w[i]-args.wtol], marker="_", c='white', alpha=0.1)
 
 	ax.set_xlabel("Time (number of samples)")
 	ax.set_ylabel("DM (pc cm^-3)")
@@ -164,14 +174,9 @@ def plot_cands(old_cands, new_cands, args):
 	ax.set_zlim([min(old_w)-args.wtol, max(old_w)+args.wtol])
 
 	# After grouping
-	ax = fig.add_subplot(133, projection='3d')
+	ax = fig.add_subplot(433, projection='3d')
 
-	new_t = [ cand[t] for cand in new_cands ]
-	new_dm = [ cand[dm] for cand in new_cands ]
-	new_w = [ cand[w] for cand in new_cands ]
-	new_sn = [ cand[sn] for cand in new_cands ]
-
-	ax.scatter(new_t, new_dm, new_w, c=new_sn, cmap='winter')
+	ax.scatter(new_t, new_dm, new_w, c=new_sn, cmap=colourmap)
 
 	ax.set_xlabel("Time (number of samples)")
 	ax.set_ylabel("DM (pc cm^-3)")
@@ -181,6 +186,78 @@ def plot_cands(old_cands, new_cands, args):
 	ax.set_ylim([min(old_dm)-args.dmtol, max(old_dm)+args.dmtol])
 	ax.set_zlim([min(old_w)-args.wtol, max(old_w)+args.wtol])
 
+	# 2D plots
+	# Before grouping
+	ax = fig.add_subplot(434)
+	ax.scatter(old_t, old_dm, c=old_sn, cmap=colourmap, s=marker_size)
+	ax.set_xlabel("Time (number of samples)")
+	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
+	ax.set_ylim([min(old_dm)-args.dmtol, max(old_dm)+args.dmtol])
+	ax.scatter(new_t, new_dm, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+
+	ax = fig.add_subplot(437)
+	ax.scatter(old_t, old_w, c=old_sn, cmap=colourmap, s=marker_size)
+	ax.set_xlabel("Time (number of samples)")
+	ax.set_ylabel("Width (number of samples)")
+	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
+	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
+	ax.scatter(new_t, new_w, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+	
+	ax = fig.add_subplot(4,3,10)
+	ax.scatter(old_dm, old_w, c=old_sn, cmap=colourmap, s=marker_size)
+	ax.set_xlabel("DM (pc cm^-3)")
+	ax.set_ylabel("Width (number of samples)")
+	ax.set_xlim([min(old_dm)-args.ttol, max(old_dm)+args.ttol])
+	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
+	ax.scatter(new_dm, new_w, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+
+	# Before grouping with error bars
+	ax = fig.add_subplot(435)
+	ax.errorbar(old_t, old_dm, xerr=args.ttol, yerr=args.dmtol, fmt='o', c='white', ms=2, alpha=0.25)
+	ax.set_xlabel("Time (number of samples)")
+	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
+	ax.set_ylim([min(old_dm)-args.dmtol, max(old_dm)+args.dmtol])
+
+	ax = fig.add_subplot(438)
+	ax.errorbar(old_t, old_w, xerr=args.ttol, yerr=args.wtol, fmt='o', c='white', ms=2, alpha=0.25)
+	ax.set_xlabel("Time (number of samples)")
+	ax.set_ylabel("Width (number of samples)")
+	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
+	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
+	
+	ax = fig.add_subplot(4,3,11)
+	ax.errorbar(old_dm, old_w, xerr=args.dmtol, yerr=args.wtol, fmt='o', c='white', ms=2, alpha=0.25)
+	ax.set_xlabel("DM (pc cm^-3)")
+	ax.set_ylabel("Width (number of samples)")
+	ax.set_xlim([min(old_dm)-args.ttol, max(old_dm)+args.ttol])
+	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
+
+	# After grouping
+	ax = fig.add_subplot(436)
+	ax.scatter(new_t, new_dm, c=new_sn, cmap=colourmap, s=marker_size)
+	ax.set_xlabel("Time (number of samples)")
+	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
+	ax.set_ylim([min(old_dm)-args.dmtol, max(old_dm)+args.dmtol])
+
+	ax = fig.add_subplot(439)
+	ax.scatter(new_t, new_w, c=new_sn, cmap=colourmap, s=marker_size)
+	ax.set_xlabel("Time (number of samples)")
+	ax.set_ylabel("Width (number of samples)")
+	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
+	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
+	
+	ax = fig.add_subplot(4,3,12)
+	ax.scatter(new_dm, new_w, c=new_sn, cmap=colourmap, s=marker_size)
+	ax.set_xlabel("DM (pc cm^-3)")
+	ax.set_ylabel("Width (number of samples)")
+	ax.set_xlim([min(old_dm)-args.ttol, max(old_dm)+args.ttol])
+	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
+
+	plt.savefig("grouping.png")
+	plt.tight_layout()
 	plt.show()
 
 def write_cands(fname, cands):
