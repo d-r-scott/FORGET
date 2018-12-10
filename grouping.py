@@ -72,10 +72,9 @@ def open_file(fname, args):
 					new_cand.append(0)
 					cands.append(new_cand)
 
-	# Sort cands by S/N then give them all unique labels
-	# This will give the lowest S/N cand a label of 0, the second lowest a label of 1, and so on
-	# For now, the labels are the same as the cand's position in the list
-	cands.sort(key=lambda x: x[sn])
+	# Give each candidate a label corresponding to its initial position in the list
+	# Sorting is no longer required
+	#cands.sort(key=lambda x: x[sn])
 	for i, cand in enumerate(cands):
 		cand[lbl] = i
 
@@ -94,9 +93,11 @@ def group(cand_list, args):
 
 			# Check tolerances all in one boolean to allow for short circuit evaluation if any fail
 			if t_diff <= args.ttol and dm_diff <= args.dmtol and w_diff <= args.wtol:
-				# Give the coincident events the label of whichever is brightest
-				cand_list[i][lbl] = max(cand_list[i][lbl], cand_list[j][lbl])
-				cand_list[j][lbl] = max(cand_list[i][lbl], cand_list[j][lbl])
+				# Give both cands the label of whichever is brightest
+				if cand_list[i][sn] >= cand_list [j][sn]:
+					cand_list[j][lbl] = cand_list[i][lbl]
+				else:	# j brighter than i
+					cand_list[i][lbl] = cand_list[j][lbl]
 
 	# We've found all the groups, now trace the label chains to give each group the same label
 	for cand in cand_list:
@@ -115,8 +116,11 @@ def group(cand_list, args):
 def trace_equivalency_chain(cand, cand_list):
 	while True:
 		old_lbl = cand[lbl]
+		old_sn = cand[sn]
+
 		cand = cand_list[old_lbl]
-		if cand[lbl] == old_lbl:	# We've reached the end
+
+		if cand[lbl] == old_lbl and cand[sn] == old_sn:		# We've reached the end of the chain
 			break
 
 def plot_cands(old_cands, new_cands, args):
