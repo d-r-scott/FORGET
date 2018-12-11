@@ -2,7 +2,7 @@
 """
 grouping.py
 
-AUTHOR: David Scott [david.r.scott@student.curtin.edu.au]
+AUTHOR: David Scott [david.r.scott@graduate.curtin.edu.au]
 
 PURPOSE: Groups candidate events in given files by simply comparing all pairs to find coincident events
          Adapted from the clustering algorithm used in Heimdall by Ben Barsdell and Andrew Jameson
@@ -25,19 +25,19 @@ bno = 6		# Beam number
 mjd = 7		# Modified Julian Date
 lbl = 8		# Label
 
-__author__ = "David Scott <david.r.scott@student.curtin.edu.au>"
+__author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
 def _main():
 	# For consistency many arguments are the same as for friends of friends
 	# Notable exception: -w is the width tolerance, not the maximum width considered
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.grouped', formatter_class=ArgumentDefaultsHelpFormatter)
-	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=32)
-	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=20)
-	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=5)
+	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=3)
+	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=2.)
+	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=2)
 	parser.add_argument('--tmin', type=int, help='Earliest time sample to consider', default=0)
 	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
-	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=32)
+	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
 	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
 
