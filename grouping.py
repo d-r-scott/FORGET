@@ -13,6 +13,7 @@ PURPOSE: Groups candidate events in given files by simply comparing all pairs to
 import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
+from astropy.time import Time
 
 # Index values for various candidate fields
 sn 	= 0		# S/N
@@ -36,22 +37,31 @@ def _main():
 	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=2.)
 	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=2)
 	parser.add_argument('--tmin', type=int, help='Earliest time sample to consider', default=0)
+	parser.add_argument('--tmax', type=int, help='Latest time sample to consider', default=9999999999)
 	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
 	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
 	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
+	parser.add_argument('-l', '--latency', action='store_true', help='Measure and output latency', default=False)
 
 	parser.add_argument(dest='files', nargs='+')
 	args = parser.parse_args()
 
 	for fname in args.files:
+		if args.latency:
+			start_time = Time.now()
 		old_cands = open_file(fname, args)		# Open file and return all valid cands
 		new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
+		if args.latency:
+			end_time = Time.now()
 
 		if args.plot:
 			plot_cands(old_cands, new_cands, args)
 
 		print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
+		if args.latency:
+			print "Latency: {} ms".format((end_time.mjd-start_time.mjd)*86400.0*1e3)
+
 		write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
 
 # Open the file with given filename and return an array of candidates
@@ -62,12 +72,12 @@ def open_file(fname, args):
 	cands = []
 	with open(fname, 'r') as f:
 		for i, line in enumerate(f):
-			if line[0] != '#' and line.strip() != '':
+			if line[0] != '#' and len(line) > 7:
 				# Not a comment and not empty
 				new_cand = map(float, line.split())
 
 				# Filter out candidates with values we want to exclude
-				if new_cand[sn] >= args.snmin and new_cand[t]  >= args.tmin and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin:
+				if new_cand[sn] >= args.snmin and new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin:
 					# Add a label field and then add the cand to the list
 					new_cand.append(0)
 					cands.append(new_cand)
