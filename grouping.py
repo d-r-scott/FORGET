@@ -24,7 +24,10 @@ idt = 4		# number of samples difference between top and bottom of frequency rang
 dm  = 5		# DM
 bno = 6		# Beam number
 mjd = 7		# Modified Julian Date
+
 lbl = 8		# Label
+rsql= 9		# R^2 for cands with time and dm less than brightest in group
+rsqm= 10	# R^2 for cands with time and dm more than brightest in group
 
 __author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
@@ -41,6 +44,8 @@ def _main():
 	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
 	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
+	parser.add_argument('--rsqlmin', type=float, help='Minimum R^2 (less) to consider', default=-1.)
+	parser.add_argument('--rsqmmin', type=float, help='Minimum R^2 (more) to consider', default=-1.)
 	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
 	parser.add_argument('-l', '--latency', action='store_true', help='Measure and output latency', default=False)
 
@@ -113,6 +118,9 @@ def group(cand_list, args):
 	for cand in cand_list:
 		trace_equivalency_chain(cand, cand_list)
 
+	# Determine the correlation coefficients of each group
+	det_corr_coefs(cand_list)
+
 	# Return just a list of the cands that are at the top of each chain
 	# Effectively, the cands whose label have NOT changed, i.e. cand_list[i][lbl] == i
 	new_cands = []
@@ -120,18 +128,81 @@ def group(cand_list, args):
 		if cand_list[i][lbl] == i:
 			new_cands.append(cand_list[i])
 
+	# Filter by the R^2 values
+	new_cands = [ cand for cand in new_cands if cand[rsql] >= args.rsqlmin and cand[rsqm] >= args.rsqmmin ] 
+
 	return new_cands
 
 # Move the cand along the label chain and set the imported cand's label to the label at the end of it
+# Return a list of the candidates in the chain
 def trace_equivalency_chain(cand, cand_list):
+	chain = []
 	while True:
+		chain.append(cand)
 		old_lbl = cand[lbl]
 		old_sn = cand[sn]
 
 		cand = cand_list[old_lbl]
 
 		if cand[lbl] == old_lbl and cand[sn] == old_sn:		# We've reached the end of the chain
+			for link in chain:
+				link[lbl] = old_lbl
 			break
+
+"""
+Determine the correlation coefficients for every group
+There will be two lines used to calculate these coefficients. Both will start at the brightest cand in
+	the group. One goes to the point at the minimum values of time and DM, and the other to the
+	maximum of these values. The correlation coefficients of each line are determined and added to the
+	brightest cand in each group.
+These coefficients could be used to determine if the group corresponds to a real FRB.
+"""
+def det_corr_coefs(cand_list):
+	# Get the labels of each group by finding the unique labels in the cand_list
+	labels = [ cand[lbl] for cand in cand_list ]
+	unique_labels = list(set(labels))
+
+	for label in unique_labels:
+		# Each label is the index of the brightest candidate in each group
+		# Get a list containing just the cands in the current group
+		group = [ cand for cand in cand_list if cand[lbl] == label ]
+
+		# Calculate R^2 for cands with start time and DM less than group's brightest cand
+		less_group = [ cand for cand in group if cand[t] <= cand_list[label][t] and cand[dm] <= cand_list[label][dm] ]
+		less_ts = [ cand[t] for cand in less_group ]
+		less_dms = [ cand[dm] for cand in less_group ]
+		less_r_squared = calc_r_squared(np.array(less_ts), np.array(less_dms))
+
+		# Calculate R^2 for cands with start time and DM more than group's brightest cand
+		more_group = [ cand for cand in group if cand[t] >= cand_list[label][t] and cand[dm] >= cand_list[label][dm] ]
+		more_ts = [ cand[t] for cand in more_group ]
+		more_dms = [ cand[dm] for cand in more_group ]
+		more_r_squared = calc_r_squared(np.array(more_ts), np.array(more_dms))
+
+		# Give brightest cand the R^2 values
+		cand_list[label].append(less_r_squared)
+		cand_list[label].append(more_r_squared)
+
+# Calculate the correlation coefficient (R^2) of the data given as lists of times and DMs
+def calc_r_squared(ts, dms):
+	t_min = min(ts)
+	t_max = max(ts)
+	dm_min = min(dms)
+	dm_max = max(dms)
+
+	# Calculate gradient of line going from (t_min, dm_min) to (t_max, dm_max) and use it as a model
+	m = (dm_max - dm_min)/(t_max - t_min)
+	f = lambda t_i : m*(t_i - t_min) + dm_min
+
+	model_dms = np.array([ f(t_i) for t_i in ts ])
+
+	# Sums of squares
+	ss_res = np.sum(np.square(dms - model_dms))	# Residuals
+	ss_tot = np.sum(np.square(dms - np.average(dms)))	# Total
+
+	r_squared = 1 - ss_res/ss_tot
+
+	return r_squared
 
 def plot_cands(old_cands, new_cands, args):
 	plt.style.use('dark_background')
@@ -271,10 +342,10 @@ def plot_cands(old_cands, new_cands, args):
 	plt.show()
 
 def write_cands(fname, cands):
-	header = '# S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label'
+	header = '# S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, R^2 (less), R^2 (more)'
 	intf = '%d'
 	floatf = '%0.3f'
-	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf)
+	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, floatf, floatf)
 	npcands = np.array(cands)
 	np.savetxt(fname+'.grouped', npcands, fmt=formats, header=header)
 
