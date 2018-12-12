@@ -56,11 +56,15 @@ def _main():
 		if args.latency:
 			start_time = Time.now()
 		old_cands = open_file(fname, args)		# Open file and return all valid cands
-		new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
+		if len(old_cands) > 0:
+			new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
+		else:
+			new_cands = []
+
 		if args.latency:
 			end_time = Time.now()
 
-		if args.plot:
+		if args.plot and len(old_cands) > 0:
 			plot_cands(old_cands, new_cands, args)
 
 		print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
@@ -129,6 +133,7 @@ def group(cand_list, args):
 		if cand_list[i][lbl] == i:
 			new_cands.append(cand_list[i])
 
+	
 	# Filter by the R^2 values
 	# Even if the rsqXmin values are left as default, this will filter out those with NaN as R^2 values
 	new_cands = [ cand for cand in new_cands if cand[rsql] >= args.rsqlmin and cand[rsqm] >= args.rsqmmin ] 
