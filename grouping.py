@@ -67,7 +67,8 @@ def _main():
 		if args.latency:
 			print "Latency: {} ms".format((end_time.mjd-start_time.mjd)*86400.0*1e3)
 
-		write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
+		if len(new_cands) > 0:
+			write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
 
 # Open the file with given filename and return an array of candidates
 # 	The candidates are structured as an array with the following fields:
@@ -129,6 +130,7 @@ def group(cand_list, args):
 			new_cands.append(cand_list[i])
 
 	# Filter by the R^2 values
+	# Even if the rsqXmin values are left as default, this will filter out those with NaN as R^2 values
 	new_cands = [ cand for cand in new_cands if cand[rsql] >= args.rsqlmin and cand[rsqm] >= args.rsqmmin ] 
 
 	return new_cands
@@ -183,22 +185,25 @@ def det_corr_coefs(cand_list):
 		cand_list[label].append(less_r_squared)
 		cand_list[label].append(more_r_squared)
 
-# Calculate the correlation coefficient (R^2) of the data given as lists of times and DMs
-def calc_r_squared(ts, dms):
-	t_min = min(ts)
-	t_max = max(ts)
-	dm_min = min(dms)
-	dm_max = max(dms)
+		# While we're here, let's also give the number of cands in the group
+		cand_list[label].append(len(group))
 
-	# Calculate gradient of line going from (t_min, dm_min) to (t_max, dm_max) and use it as a model
-	m = (dm_max - dm_min)/(t_max - t_min)
-	f = lambda t_i : m*(t_i - t_min) + dm_min
+# Calculate the correlation coefficient (R^2) of given data
+def calc_r_squared(x, y):
+	x_min = min(x)
+	x_max = max(x)
+	y_min = min(y)
+	y_max = max(y)
 
-	model_dms = np.array([ f(t_i) for t_i in ts ])
+	# Calculate gradient of line going from (x_min, y_min) to (x_max, y_max) and use it as a model
+	m = (y_max - y_min)/(x_max - x_min)
+	f = lambda i : m*(i - x_min) + y_min
+
+	model_y = np.array([ f(i) for i in x ])
 
 	# Sums of squares
-	ss_res = np.sum(np.square(dms - model_dms))	# Residuals
-	ss_tot = np.sum(np.square(dms - np.average(dms)))	# Total
+	ss_res = np.sum(np.square(y - model_y))	# Residuals
+	ss_tot = np.sum(np.square(y - np.average(y)))	# Total
 
 	r_squared = 1 - ss_res/ss_tot
 
@@ -342,10 +347,10 @@ def plot_cands(old_cands, new_cands, args):
 	plt.show()
 
 def write_cands(fname, cands):
-	header = '# S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, R^2 (less), R^2 (more)'
+	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, R^2 (less), R^2 (more), number in group'
 	intf = '%d'
-	floatf = '%0.3f'
-	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, floatf, floatf)
+	floatf = '%0.2f'
+	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, floatf, floatf, intf)
 	npcands = np.array(cands)
 	np.savetxt(fname+'.grouped', npcands, fmt=formats, header=header)
 
