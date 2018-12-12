@@ -1,2 +1,2 @@
-grouping.png
-*.cand*
+*.png
+test_files/*.grouped
