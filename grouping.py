@@ -26,8 +26,9 @@ bno = 6		# Beam number
 mjd = 7		# Modified Julian Date
 
 lbl = 8		# Label
-rsql= 9		# R^2 for cands with time and dm less than brightest in group
-rsqm= 10	# R^2 for cands with time and dm more than brightest in group
+ning= 9 	# Number of candidates in the group this candidate represens
+rsql= 10	# R^2 for cands with time and dm less than brightest in group
+rsqm= 11	# R^2 for cands with time and dm more than brightest in group
 
 __author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
@@ -89,13 +90,14 @@ def open_file(fname, args):
 
 				# Filter out candidates with values we want to exclude
 				if new_cand[sn] >= args.snmin and new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin:
-					# Add a label field and then add the cand to the list
+					# Add a label field and number candidates in group field
 					new_cand.append(0)
+					new_cand.append(1)
 					cands.append(new_cand)
 
+	cands.sort(key=lambda x: x[sn])
+
 	# Give each candidate a label corresponding to its initial position in the list
-	# Sorting is no longer required
-	#cands.sort(key=lambda x: x[sn])
 	for i, cand in enumerate(cands):
 		cand[lbl] = i
 
@@ -104,29 +106,37 @@ def open_file(fname, args):
 # Iterate over the cands and group them with other cands that are nearby in time-DM-width space
 # The returned list of cands will contain only those in each group with the highest S/N
 def group(cand_list, args):
+	#cand_list.sort(key=lambda x : x[t])
 	# For every cand, compare it to each other cand
 	# If the cands are within the time, DM, and width tolerances of each other, give them both the label of the cand with the highest S/N
 	for i in range(len(cand_list)):
-		for j in range(i+1, len(cand_list)):	# Start at i+1 to avoid doing things twice
-			t_diff = abs(cand_list[i][t] - cand_list[j][t])
-			dm_diff = abs(cand_list[i][dm] - cand_list[j][dm])
-			w_diff = abs(cand_list[i][w] - cand_list[j][w])
+		for j in range(len(cand_list)):
+			if i != j:
+				t_diff = abs(cand_list[i][t] - cand_list[j][t])
+				dm_diff = abs(cand_list[i][dm] - cand_list[j][dm])
+				w_diff = abs(cand_list[i][w] - cand_list[j][w])
 
-			# Check tolerances all in one boolean to allow for short circuit evaluation if any fail
-			if t_diff <= args.ttol and dm_diff <= args.dmtol and w_diff <= args.wtol:
-				# Give both cands the label of whichever is brightest
-				if cand_list[i][sn] >= cand_list [j][sn]:
-					cand_list[j][lbl] = cand_list[i][lbl]
-				else:	# j brighter than i
-					cand_list[i][lbl] = cand_list[j][lbl]
+				if t_diff <= args.ttol and dm_diff <= args.dmtol and w_diff <= args.wtol:
+					# Give both cands the label of whichever is brightest
+					if cand_list[i][sn] >= cand_list [j][sn]:
+						cand_list[j][lbl] = cand_list[i][lbl]
+					else:	# j brighter than i
+						cand_list[i][lbl] = cand_list[j][lbl]
 
 	# We've found all the groups, now trace the label chains to give each group the same label
 	for cand in cand_list:
 		trace_equivalency_chain(cand, cand_list)
 
+	# Count how many cands there are in each group
+	# Get the labels of each group by finding the unique labels in cand_list
+	labels = [ cand[lbl] for cand in cand_list ]
+	unique_labels = list(set(labels))
+	for label in unique_labels:
+		cand_list[label][ning] = labels.count(label)
+
 	# Determine the correlation coefficients of each group
 	if args.rsq:
-		det_corr_coefs(cand_list)
+		det_corr_coefs(cand_list, unique_labels)
 	else:
 		for cand in cand_list:
 			# Not calculating the R^2 values, but need something to put in the column
@@ -140,7 +150,6 @@ def group(cand_list, args):
 		if cand_list[i][lbl] == i:
 			new_cands.append(cand_list[i])
 
-	
 	# Filter by the R^2 values
 	# Even if the rsqXmin values are left as default, this will filter out those with NaN as R^2 values
 	new_cands = [ cand for cand in new_cands if cand[rsql] >= args.rsqlmin and cand[rsqm] >= args.rsqmmin ] 
@@ -155,10 +164,11 @@ def trace_equivalency_chain(cand, cand_list):
 		chain.append(cand)
 		old_lbl = cand[lbl]
 		old_sn = cand[sn]
-
+		cand[ning] = cand_list[old_lbl][ning]
 		cand = cand_list[old_lbl]
 
 		if cand[lbl] == old_lbl and cand[sn] == old_sn:		# We've reached the end of the chain
+			# Set all labels to be the same
 			for link in chain:
 				link[lbl] = old_lbl
 			break
@@ -171,10 +181,7 @@ There will be two lines used to calculate these coefficients. Both will start at
 	brightest cand in each group.
 These coefficients could be used to determine if the group corresponds to a real FRB.
 """
-def det_corr_coefs(cand_list):
-	# Get the labels of each group by finding the unique labels in the cand_list
-	labels = [ cand[lbl] for cand in cand_list ]
-	unique_labels = list(set(labels))
+def det_corr_coefs(cand_list, unique_labels):
 
 	for label in unique_labels:
 		# Each label is the index of the brightest candidate in each group
@@ -197,29 +204,27 @@ def det_corr_coefs(cand_list):
 		cand_list[label].append(less_r_squared)
 		cand_list[label].append(more_r_squared)
 
-		# While we're here, let's also give the number of cands in the group
-		cand_list[label].append(len(group))
-
 # Calculate the correlation coefficient (R^2) of given data
 def calc_r_squared(x, y):
-	x_min = min(x)
-	x_max = max(x)
-	y_min = min(y)
-	y_max = max(y)
+	with np.errstate(divide='ignore', invalid='ignore'):	# Hide warning messages about zero division
+		x_min = min(x)
+		x_max = max(x)
+		y_min = min(y)
+		y_max = max(y)
 
-	# Calculate gradient of line going from (x_min, y_min) to (x_max, y_max) and use it as a model
-	m = (y_max - y_min)/(x_max - x_min)
-	f = lambda i : m*(i - x_min) + y_min
+		# Calculate gradient of line going from (x_min, y_min) to (x_max, y_max) and use it as a model
+		m = (y_max - y_min)/(x_max - x_min)
+		f = lambda i : m*(i - x_min) + y_min
 
-	model_y = np.array([ f(i) for i in x ])
+		model_y = np.array([ f(i) for i in x ])
 
-	# Sums of squares
-	ss_res = np.sum(np.square(y - model_y))	# Residuals
-	ss_tot = np.sum(np.square(y - np.average(y)))	# Total
+		# Sums of squares
+		ss_res = np.sum(np.square(y - model_y))	# Residuals
+		ss_tot = np.sum(np.square(y - np.average(y)))	# Total
 
-	r_squared = 1 - ss_res/ss_tot
+		r_squared = 1 - ss_res/ss_tot
 
-	return r_squared
+		return r_squared
 
 def plot_cands(old_cands, new_cands, args):
 	plt.style.use('dark_background')
@@ -359,10 +364,10 @@ def plot_cands(old_cands, new_cands, args):
 	plt.show()
 
 def write_cands(fname, cands):
-	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, R^2 (less), R^2 (more)'#, number in group'
+	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, number in group, R^2 (less), R^2 (more)'
 	intf = '%d'
 	floatf = '%0.2f'
-	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, floatf, floatf)#, intf)
+	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, intf, floatf, floatf)
 	npcands = np.array(cands)
 	np.savetxt(fname+'.grouped', npcands, fmt=formats, header=header)
 
