@@ -44,6 +44,7 @@ def _main():
 	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
 	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
+	parser.add_argument('-r', '--rsq', action='store_true', help='Enable calculation of and filtering by correlation coefficients', default=False)
 	parser.add_argument('--rsqlmin', type=float, help='Minimum R^2 (less) to consider', default=-1.)
 	parser.add_argument('--rsqmmin', type=float, help='Minimum R^2 (more) to consider', default=-1.)
 	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
@@ -124,7 +125,13 @@ def group(cand_list, args):
 		trace_equivalency_chain(cand, cand_list)
 
 	# Determine the correlation coefficients of each group
-	det_corr_coefs(cand_list)
+	if args.rsq:
+		det_corr_coefs(cand_list)
+	else:
+		for cand in cand_list:
+			# Not calculating the R^2 values, but need something to put in the column
+			cand.append(0.)
+			cand.append(0.)
 
 	# Return just a list of the cands that are at the top of each chain
 	# Effectively, the cands whose label have NOT changed, i.e. cand_list[i][lbl] == i
@@ -352,10 +359,10 @@ def plot_cands(old_cands, new_cands, args):
 	plt.show()
 
 def write_cands(fname, cands):
-	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, R^2 (less), R^2 (more), number in group'
+	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, R^2 (less), R^2 (more)'#, number in group'
 	intf = '%d'
 	floatf = '%0.2f'
-	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, floatf, floatf, intf)
+	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, floatf, floatf)#, intf)
 	npcands = np.array(cands)
 	np.savetxt(fname+'.grouped', npcands, fmt=formats, header=header)
 
