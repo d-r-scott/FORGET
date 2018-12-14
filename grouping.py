@@ -106,7 +106,6 @@ def open_file(fname, args):
 # Iterate over the cands and group them with other cands that are nearby in time-DM-width space
 # The returned list of cands will contain only those in each group with the highest S/N
 def group(cand_list, args):
-	#cand_list.sort(key=lambda x : x[t])
 	# For every cand, compare it to each other cand
 	# If the cands are within the time, DM, and width tolerances of each other, give them both the label of the cand with the highest S/N
 	for i in range(len(cand_list)):
