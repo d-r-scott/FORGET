@@ -84,12 +84,15 @@ def open_file(fname, args):
 	cands = []
 	with open(fname, 'r') as f:
 		for i, line in enumerate(f):
-			if line[0] != '#' and len(line) > 7:
+			if line[0] != '#' and len(line) > 5:
 				# Not a comment and not empty
 				new_cand = map(float, line.split())
 
 				# Filter out candidates with values we want to exclude
 				if new_cand[sn] >= args.snmin and new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin:
+					# Sometimes there's no mjd field by default, so we need to add it
+					while len(new_cand) <= mjd:
+						new_cand.append(0.0)
 					# Add a label field and number candidates in group field
 					new_cand.append(0)
 					new_cand.append(1)
@@ -106,6 +109,7 @@ def open_file(fname, args):
 # Iterate over the cands and group them with other cands that are nearby in time-DM-width space
 # The returned list of cands will contain only those in each group with the highest S/N
 def group(cand_list, args):
+	#cand_list.sort(key=lambda x : x[t])
 	# For every cand, compare it to each other cand
 	# If the cands are within the time, DM, and width tolerances of each other, give them both the label of the cand with the highest S/N
 	for i in range(len(cand_list)):
