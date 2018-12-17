@@ -43,6 +43,7 @@ def _main():
 	parser.add_argument('--tmin', type=int, help='Earliest time sample to consider', default=0)
 	parser.add_argument('--tmax', type=int, help='Latest time sample to consider', default=9999999999)
 	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
+	parser.add_argument('--dmmax', type=float, help='Maximum DM to consider (pc/cm3)', default=0.)
 	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
 	parser.add_argument('-r', '--rsq', action='store_true', help='Enable calculation of and filtering by correlation coefficients', default=False)
@@ -85,11 +86,11 @@ def open_file(fname, args):
 	with open(fname, 'r') as f:
 		for i, line in enumerate(f):
 			if line[0] != '#' and len(line) > 5:
-				# Not a comment and not empty
-				new_cand = map(float, line.split())
+				# In case the file has more columns than we need
+				new_cand = map(float, line.split()[0:7])
 
 				# Filter out candidates with values we want to exclude
-				if new_cand[sn] >= args.snmin and new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin:
+				if new_cand[sn] >= args.snmin and new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin and new_cand[dm] <= args.dmmax:
 					# Sometimes there's no mjd field by default, so we need to add it
 					while len(new_cand) <= mjd:
 						new_cand.append(0.0)
