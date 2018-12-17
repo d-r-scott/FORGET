@@ -26,6 +26,8 @@ def _main():
 	for fname in args.files:
 		cands_list_list.append(open_file(fname, args))
 
+	cands_list_list = sorted(cands_list_list, key=lambda cand_list: max(cand_list, key=lambda cand: float(cand[sn])))
+
 	plot_all(cands_list_list, args)
 
 def open_file(fname, args):
@@ -43,7 +45,7 @@ def open_file(fname, args):
 def plot_all(cands_list_list, args):
 	plt.style.use('dark_background')
 	colourmap='autumn'
-	marker_size=3
+	marker_size=10
 	line_width=1
 
 	more_gradients = []
@@ -75,7 +77,7 @@ def plot_all(cands_list_list, args):
 		less_dms = [ float(cand[dm]) for cand in less ]
 
 		# Candidates
-		ax.scatter(ts, dms, c=sns, cmap=colourmap)
+		ax.scatter(ts, dms, c=sns, cmap=colourmap, s=marker_size)
 
 		# Quadrants
 		# More
@@ -108,7 +110,6 @@ def plot_all(cands_list_list, args):
 	#plt.show()
 
 	df = pd.DataFrame({'Gradient (more)':more_gradients, 'Gradient (less)':less_gradients, 'R^2 (more)':more_rsqs, 'R^2 (less)':less_rsqs})
-
 	print(df.describe())
 
 def calc_r_squared(x, y):
