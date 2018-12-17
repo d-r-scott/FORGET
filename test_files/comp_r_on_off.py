@@ -34,7 +34,7 @@ fig = plt.figure()
 gs = gridspec.GridSpec(3,1)
 
 ax = fig.add_subplot(gs[0,0])
-plt.title('Fraction of candidates post-grouping')
+plt.title('Number of candidates post-grouping (out of 40)')
 r_on['after'].plot.hist(alpha=0.5, label='R^2 calculation on', bins=bins)
 r_off['after'].plot.hist(alpha=0.5, label='R^2 calculation off', bins=bins)
 #r_on['frac'].plot.hist(alpha=0.5, label='R^2 calculation on', bins=bins)
