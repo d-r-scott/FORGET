@@ -1,7 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 import numpy as np
 import matplotlib.pyplot as plt
+import pandas as pd
 
 # Index values for various candidate fields
 sn  = 0     # S/N
@@ -45,7 +46,12 @@ def plot_all(cands_list_list, args):
 	marker_size=3
 	line_width=1
 
-	# For now 14 files assumed --> 4 columns, 4 rows
+	more_gradients = []
+	less_gradients = []
+	more_rsqs = []
+	less_rsqs = []
+
+	# For now 16 files assumed --> 4 columns, 4 rows
 	n_col = 4
 	n_row = 4
 
@@ -78,19 +84,54 @@ def plot_all(cands_list_list, args):
 		ax.plot([int(brightest[t]), max(more_ts)], [float(brightest[dm]), float(brightest[dm])], c='white', linewidth=line_width)
 		ax.plot([max(more_ts), max(more_ts)], [float(brightest[dm]), max(more_dms)], c='white', linewidth=line_width)
 		
-
+		# Less
 		ax.plot([int(brightest[t]),int(brightest[t])], [float(brightest[dm]), min(less_dms)], c='white', linewidth=line_width)
 		ax.plot([int(brightest[t]), min(less_ts)], [min(less_dms), min(less_dms)], c='white', linewidth=line_width)
 		ax.plot([int(brightest[t]), min(less_ts)], [float(brightest[dm]), float(brightest[dm])], c='white', linewidth=line_width)
 		ax.plot([min(less_ts), min(less_ts)], [float(brightest[dm]), min(less_dms)], c='white', linewidth=line_width)
 
+		# Fit line
+		ax.plot([int(brightest[t]), max(more_ts)], [float(brightest[dm]), max(more_dms)], c='#0000FF', linewidth=2*line_width)
+		ax.plot([int(brightest[t]), min(less_ts)], [float(brightest[dm]), min(less_dms)], c='#0000FF', linewidth=2*line_width)
+
+		# Calculate values
+		more_gradients.append((max(more_dms) - float(brightest[dm]))/(max(more_ts)-int(brightest[t])))
+		less_gradients.append((min(less_dms) - float(brightest[dm]))/(min(less_ts)-int(brightest[t])))
+		more_rsqs.append(calc_r_squared(np.array(more_ts), np.array(more_dms)))
+		less_rsqs.append(calc_r_squared(np.array(less_ts), np.array(less_dms)))
 
 		ax.set_xlabel("Time (number of samples)")
 		ax.set_ylabel("DM (pc/cm3)")
 		ax.set_title(args.files[i])
 
-	plt.savefig("real_FRB_cands.png")
+	plt.savefig("DM_t.png")
 	#plt.show()
+
+	df = pd.DataFrame({'Gradient (more)':more_gradients, 'Gradient (less)':less_gradients, 'R^2 (more)':more_rsqs, 'R^2 (less)':less_rsqs})
+
+	print(df.describe())
+
+def calc_r_squared(x, y):
+	with np.errstate(divide='ignore', invalid='ignore'):	# Hide warning messages about zero division
+		x_min = min(x)
+		x_max = max(x)
+		y_min = min(y)
+		y_max = max(y)
+
+		# Calculate gradient of line going from (x_min, y_min) to (x_max, y_max) and use it as a model
+		m = (y_max - y_min)/(x_max - x_min)
+		f = lambda i : m*(i - x_min) + y_min
+
+		model_y = np.array([ f(i) for i in x ])
+
+		# Sums of squares
+		ss_res = np.sum(np.square(y - model_y)) # Residuals
+		ss_tot = np.sum(np.square(y - np.average(y)))   # Total
+
+		r_squared = 1 - ss_res/ss_tot
+
+		return r_squared
+
 
 if __name__ == "__main__":
 	_main()

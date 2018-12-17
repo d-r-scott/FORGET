@@ -43,7 +43,7 @@ def _main():
 	parser.add_argument('--tmin', type=int, help='Earliest time sample to consider', default=0)
 	parser.add_argument('--tmax', type=int, help='Latest time sample to consider', default=9999999999)
 	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
-	parser.add_argument('--dmmax', type=float, help='Maximum DM to consider (pc/cm3)', default=0.)
+	parser.add_argument('--dmmax', type=float, help='Maximum DM to consider (pc/cm3)', default=10000.)
 	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
 	parser.add_argument('-r', '--rsq', action='store_true', help='Enable calculation of and filtering by correlation coefficients', default=False)
