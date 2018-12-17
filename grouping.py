@@ -47,8 +47,8 @@ def _main():
 	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
 	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
 	parser.add_argument('-r', '--rsq', action='store_true', help='Enable calculation of and filtering by correlation coefficients', default=False)
-	parser.add_argument('--rsqlmin', type=float, help='Minimum R^2 (less) to consider', default=-1.)
-	parser.add_argument('--rsqmmin', type=float, help='Minimum R^2 (more) to consider', default=-1.)
+	parser.add_argument('--rsqlmin', type=float, help='Minimum R^2 (less) to consider', default=-100.)
+	parser.add_argument('--rsqmmin', type=float, help='Minimum R^2 (more) to consider', default=-100.)
 	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
 	parser.add_argument('-l', '--latency', action='store_true', help='Measure and output latency', default=False)
 
