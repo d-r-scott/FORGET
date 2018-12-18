@@ -3,6 +3,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import pandas as pd
+from math import floor, ceil, sqrt
 
 # Index values for various candidate fields
 sn  = 0     # S/N
@@ -26,7 +27,7 @@ def _main():
 	for fname in args.files:
 		cands_list_list.append(open_file(fname, args))
 
-	cands_list_list = sorted(cands_list_list, key=lambda cand_list: max(cand_list, key=lambda cand: float(cand[sn])))
+	#cands_list_list = sorted(cands_list_list, key=lambda cand_list: max(cand_list, key=lambda cand: float(cand[sn])))
 
 	plot_all(cands_list_list, args)
 
@@ -43,9 +44,10 @@ def open_file(fname, args):
 	return cands
 
 def plot_all(cands_list_list, args):
-	plt.style.use('dark_background')
-	colourmap='autumn'
-	marker_size=10
+	#plt.style.use('dark_background')
+	colourmap='winter'
+	quad_colour='black'
+	marker_size=50
 	line_width=1
 
 	more_gradients = []
@@ -53,11 +55,10 @@ def plot_all(cands_list_list, args):
 	more_rsqs = []
 	less_rsqs = []
 
-	# For now 16 files assumed --> 4 columns, 4 rows
-	n_col = 4
-	n_row = 4
+	n_col = floor(sqrt(len(args.files)))
+	n_row = ceil(sqrt(len(args.files)))
 
-	fig = plt.figure(figsize=(24,24))
+	fig = plt.figure(figsize=(12,12))
 
 	for i, cands_list in enumerate(cands_list_list):
 		ax = fig.add_subplot(n_row, n_col, i+1)
@@ -81,16 +82,16 @@ def plot_all(cands_list_list, args):
 
 		# Quadrants
 		# More
-		ax.plot([int(brightest[t]),int(brightest[t])], [float(brightest[dm]), max(more_dms)], c='white', linewidth=line_width)
-		ax.plot([int(brightest[t]), max(more_ts)], [max(more_dms), max(more_dms)], c='white', linewidth=line_width)
-		ax.plot([int(brightest[t]), max(more_ts)], [float(brightest[dm]), float(brightest[dm])], c='white', linewidth=line_width)
-		ax.plot([max(more_ts), max(more_ts)], [float(brightest[dm]), max(more_dms)], c='white', linewidth=line_width)
+		ax.plot([int(brightest[t]),int(brightest[t])], [float(brightest[dm]), max(more_dms)], c=quad_colour, linewidth=line_width)
+		ax.plot([int(brightest[t]), max(more_ts)], [max(more_dms), max(more_dms)], c=quad_colour, linewidth=line_width)
+		ax.plot([int(brightest[t]), max(more_ts)], [float(brightest[dm]), float(brightest[dm])], c=quad_colour, linewidth=line_width)
+		ax.plot([max(more_ts), max(more_ts)], [float(brightest[dm]), max(more_dms)], c=quad_colour, linewidth=line_width)
 		
 		# Less
-		ax.plot([int(brightest[t]),int(brightest[t])], [float(brightest[dm]), min(less_dms)], c='white', linewidth=line_width)
-		ax.plot([int(brightest[t]), min(less_ts)], [min(less_dms), min(less_dms)], c='white', linewidth=line_width)
-		ax.plot([int(brightest[t]), min(less_ts)], [float(brightest[dm]), float(brightest[dm])], c='white', linewidth=line_width)
-		ax.plot([min(less_ts), min(less_ts)], [float(brightest[dm]), min(less_dms)], c='white', linewidth=line_width)
+		ax.plot([int(brightest[t]),int(brightest[t])], [float(brightest[dm]), min(less_dms)], c=quad_colour, linewidth=line_width)
+		ax.plot([int(brightest[t]), min(less_ts)], [min(less_dms), min(less_dms)], c=quad_colour, linewidth=line_width)
+		ax.plot([int(brightest[t]), min(less_ts)], [float(brightest[dm]), float(brightest[dm])], c=quad_colour, linewidth=line_width)
+		ax.plot([min(less_ts), min(less_ts)], [float(brightest[dm]), min(less_dms)], c=quad_colour, linewidth=line_width)
 
 		# Fit line
 		ax.plot([int(brightest[t]), max(more_ts)], [float(brightest[dm]), max(more_dms)], c='#0000FF', linewidth=2*line_width)
