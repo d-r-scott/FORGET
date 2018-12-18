@@ -61,6 +61,7 @@ def _main():
 		old_cands = open_file(fname, args)		# Open file and return all valid cands
 		if len(old_cands) > 0:
 			new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
+			new_cands = [ cand for cand in new_cands if cand[sn] >= args.snmin ]
 		else:
 			new_cands = []
 
@@ -90,7 +91,7 @@ def open_file(fname, args):
 				new_cand = map(float, line.split()[0:7])
 
 				# Filter out candidates with values we want to exclude
-				if new_cand[sn] >= args.snmin and new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin and new_cand[dm] <= args.dmmax:
+				if new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin and new_cand[dm] <= args.dmmax:
 					# Sometimes there's no mjd field by default, so we need to add it
 					while len(new_cand) <= mjd:
 						new_cand.append(0.0)
