@@ -30,6 +30,7 @@ ning= 9 	# Number of candidates in the group this candidate represens
 rsql= 10	# R^2 for cands with time and dm less than brightest in group
 rsqm= 11	# R^2 for cands with time and dm more than brightest in group
 
+
 __author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
 def _main():
@@ -51,14 +52,19 @@ def _main():
 	parser.add_argument('--rsqmmin', type=float, help='Minimum R^2 (more) to consider', default=-100.)
 	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
 	parser.add_argument('-l', '--latency', action='store_true', help='Measure and output latency', default=False)
+	parser.add_argument('-s', '--stats', action='store_true', help='Generate and print extra stats with a more concise output', default=False)
 
 	parser.add_argument(dest='files', nargs='+')
 	args = parser.parse_args()
 
 	for fname in args.files:
+		# Global variables for extra statistics
+		global t_first, t_last
+		t_first = 999999999		# Time index of earliest cand in file (not necessarily valid cand)
+		t_last = 0				# Time index of latest cand in file (not necessarily valid cand)
+		old_cands = open_file(fname, args)		# Open file and return all valid cands
 		if args.latency:
 			start_time = Time.now()
-		old_cands = open_file(fname, args)		# Open file and return all valid cands
 		if len(old_cands) > 0:
 			new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
 			new_cands = [ cand for cand in new_cands if cand[sn] >= args.snmin ]
@@ -71,12 +77,16 @@ def _main():
 		if args.plot and len(old_cands) > 0:
 			plot_cands(old_cands, new_cands, args)
 
-		print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
+		if args.stats:
+			print "#file n_bef n_aft t_first t_last"
+			print "%s %d %d %d %d" % (fname, len(old_cands), len(new_cands), t_first, t_last)
+		else:
+			print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
 		if args.latency:
 			print "Latency: {} ms".format((end_time.mjd-start_time.mjd)*86400.0*1e3)
 
-		if len(new_cands) > 0:
-			write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
+		#if len(new_cands) > 0:
+			#write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
 
 # Open the file with given filename and return an array of candidates
 # 	The candidates are structured as an array with the following fields:
@@ -89,6 +99,12 @@ def open_file(fname, args):
 			if line[0] != '#' and len(line) > 5:
 				# In case the file has more columns than we need
 				new_cand = map(float, line.split()[0:7])
+
+				# Calculate extra stats
+				if args.stats:
+					global t_first, t_last
+					t_first = new_cand[t] if new_cand[t] < t_first else t_first
+					t_last = new_cand[t] if new_cand[t] > t_last else t_last
 
 				# Filter out candidates with values we want to exclude
 				if new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin and new_cand[dm] <= args.dmmax:
