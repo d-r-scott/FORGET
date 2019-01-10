@@ -33,6 +33,7 @@ rsqm= 11	# R^2 for cands with time and dm more than brightest in group
 
 __author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
+
 def _main():
 	# For consistency many arguments are the same as for friends of friends
 	# Notable exception: -w is the width tolerance, not the maximum width considered
@@ -391,6 +392,46 @@ def write_cands(fname, cands):
 	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, intf, floatf, floatf)
 	npcands = np.array(cands)
 	np.savetxt(fname+'.grouped', npcands, fmt=formats, header=header)
+
+# Allows use outside of this file
+def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, r_on, ext_rsqmmin):
+	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
+	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.grouped', formatter_class=ArgumentDefaultsHelpFormatter)
+	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=3)
+	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=2.)
+	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=2)
+	parser.add_argument('--tmin', type=int, help='Earliest time sample to consider', default=0)
+	parser.add_argument('--tmax', type=int, help='Latest time sample to consider', default=9999999999)
+	parser.add_argument('--dmmin', type=float, help='Minimum DM to consider (pc/cm3)', default=0.)
+	parser.add_argument('--dmmax', type=float, help='Maximum DM to consider (pc/cm3)', default=10000.)
+	parser.add_argument('--wmax', type=int, help='Maximum width to consider (time samples)', default=20)
+	parser.add_argument('--snmin', type=float, help='Minimum S/N to consider', default=0.)
+	parser.add_argument('-r', '--rsq', action='store_true', help='Enable calculation of and filtering by correlation coefficients', default=False)
+	parser.add_argument('--rsqlmin', type=float, help='Minimum R^2 (less) to consider', default=-100.)
+	parser.add_argument('--rsqmmin', type=float, help='Minimum R^2 (more) to consider', default=-100.)
+	parser.add_argument('-p', '--plot', action='store_true', help='Create plots', default=False)
+	parser.add_argument('-l', '--latency', action='store_true', help='Measure and output latency', default=False)
+	parser.add_argument('-s', '--stats', action='store_true', help='Generate and print extra stats with a more concise output', default=False)
+
+	parser.add_argument(dest='files', nargs='+')
+
+	parse_str = '--dmmin ' + str(ext_dmmin) + ' --wmax ' + str(ext_wmax) + ' --snmin ' + str(ext_snmin)
+	if r_on:
+		parse_str = parse_str + ' -r --rsqmmin ' + str(ext_rsqmmin)
+
+	parse_str = parse_str + ' grouping.py'
+
+	ext_args = parser.parse_args(parse_str.split())
+
+	cands.sort(key=lambda x: x[sn])
+
+	# Give each candidate a label corresponding to its initial position in the list
+	for i, cand in enumerate(cands):
+		cand.append(0)
+		cand.append(1)
+		cand[lbl] = i
+
+	return group(cands, ext_args)
 
 if __name__ == '__main__':
 	_main()
