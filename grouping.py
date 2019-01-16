@@ -64,11 +64,12 @@ def _main():
 		t_first = 999999999		# Time index of earliest cand in file (not necessarily valid cand)
 		t_last = 0				# Time index of latest cand in file (not necessarily valid cand)
 		old_cands = open_file(fname, args)		# Open file and return all valid cands
+
 		if args.latency:
 			start_time = Time.now()
+
 		if len(old_cands) > 0:
 			new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
-			new_cands = [ cand for cand in new_cands if cand[sn] >= args.snmin ]
 		else:
 			new_cands = []
 
@@ -83,6 +84,7 @@ def _main():
 			print "%s %d %d %d %d" % (fname, len(old_cands), len(new_cands), t_first, t_last)
 		else:
 			print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
+
 		if args.latency:
 			print "Latency: {} ms".format((end_time.mjd-start_time.mjd)*86400.0*1e3)
 
@@ -107,15 +109,13 @@ def open_file(fname, args):
 					t_first = new_cand[t] if new_cand[t] < t_first else t_first
 					t_last = new_cand[t] if new_cand[t] > t_last else t_last
 
-				# Filter out candidates with values we want to exclude
-				if new_cand[t] >= args.tmin and new_cand[t] <= args.tmax and new_cand[w]  <= args.wmax and new_cand[dm] >= args.dmmin and new_cand[dm] <= args.dmmax:
-					# Sometimes there's no mjd field by default, so we need to add it
-					while len(new_cand) <= mjd:
-						new_cand.append(0.0)
-					# Add a label field and number candidates in group field
-					new_cand.append(0)
-					new_cand.append(1)
-					cands.append(new_cand)
+				# Sometimes there's no mjd field by default, so we need to add it
+				while len(new_cand) <= mjd:
+					new_cand.append(0.0)
+				# Add a label field and number candidates in group field
+				new_cand.append(0)
+				new_cand.append(1)
+				cands.append(new_cand)
 
 	cands.sort(key=lambda x: x[sn])
 
@@ -172,9 +172,16 @@ def group(cand_list, args):
 		if cand_list[i][lbl] == i:
 			new_cands.append(cand_list[i])
 
-	# Filter by the R^2 values
+	# Filter out undesired candidates
 	# Even if the rsqXmin values are left as default, this will filter out those with NaN as R^2 values
-	new_cands = [ cand for cand in new_cands if cand[rsql] >= args.rsqlmin and cand[rsqm] >= args.rsqmmin ] 
+	new_cands = [ cand for cand in new_cands if cand[rsql] >= args.rsqlmin 
+	                                        and cand[rsqm] >= args.rsqmmin 
+	                                        and cand[sn] >= args.snmin 
+	                                        and cand[dm] >= args.dmmin
+	                                        and cand[dm] <= args.dmmax
+	                                        and cand[w] <= args.wmax
+	                                        and cand[t] >= args.tmin
+	                                        and cand[t] <= args.tmax ] 
 
 	return new_cands
 
@@ -419,7 +426,7 @@ def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, r_on, ext_rsqmmin):
 	if r_on:
 		parse_str = parse_str + ' -r --rsqmmin ' + str(ext_rsqmmin)
 
-	parse_str = parse_str + ' grouping.py'
+	parse_str = parse_str + ' not_a_real_file'
 
 	ext_args = parser.parse_args(parse_str.split())
 
