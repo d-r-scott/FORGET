@@ -7,7 +7,7 @@ import sys
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from grouping import external_grouping
 
-SB_path = '../../cands/'
+SB_path = '../../schedblocks/'
 SB_info_path = SB_path + 'SB_info.csv'
 
 smp_path = 'smp_FARs/'
@@ -332,9 +332,9 @@ def _main():
 	with open(SB_info_path, 'r') as f:
 		reader = csv.reader(f, delimiter=',')
 		for row in reader:
-			#if row[1] != '-1.0':	# A duration of -1 indicates inability to determine duration
-			new_obs = [SB_path + row[0]]
-			obs.append(new_obs)
+			if row[1] != '-1.0':	# A duration of -1 indicates inability to determine duration
+				new_obs = [SB_path + row[0], float(row[1])]
+				obs.append(new_obs)
 	
 	header = '# num, duration (s), minimum rate (s^-1), maximum rate (s^-1)\n'
 	intf = '%d '
@@ -344,12 +344,7 @@ def _main():
 	# Iterate over all observations, calculate FAR for both simple cutoff and grouping by processing
 	# in groups of n_cands
 	for o in obs:
-		#sbid_obsid = o[opath][len(SB_path):len(SB_path)+22]
 		print(o[opath])
-
-		#len(SB_path):len(SB_path)+22 makes the outfile names simply SBID/OBSID....csv
-		#smp_outfile = smp_path + sbid_obsid + '_s' + str(snmin) +  '.csv'
-		#grp_outfile = grp_path + sbid_obsid + '_s' + str(snmin) + '_r' + str(rsqmmin) + '.csv'
 
 		# Total number of candidates post-grouping
 		n_smp = 0
@@ -411,14 +406,14 @@ def _main():
 					cands = []
 
 
-		#min_smp_rate = float(n_smp)/o[odur]
+		min_smp_rate = float(n_smp)/o[odur]
 		max_smp_rate = float(n_smp)/t_last
 
-		#min_grp_rate = float(n_grp)/o[odur]
+		min_grp_rate = float(n_grp)/o[odur]
 		max_grp_rate = float(n_grp)/t_last
 
-		smp_write = formats % (n_smp, 1, t_last, 0, max_smp_rate)
-		grp_write = formats % (n_grp, 1, t_last, 0, max_grp_rate)
+		smp_write = formats % (n_smp, o[odur], t_last, min_smp_rate, max_smp_rate)
+		grp_write = formats % (n_grp, o[odur], t_last, max_grp_rate, max_grp_rate)
 
 		print(header)
 		print(smp_write)
