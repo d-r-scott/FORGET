@@ -53,6 +53,9 @@ def _main():
 
 		print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
 
+		if len(new_cands) > 0:
+			write_cands(fname, new_cands)
+
 # Open the file with given filename and return an array of candidates
 # 	The candidates are structured as an array with the following fields:
 # 	[ S/N, sampno, secs from file start, width, idt, DM, beam number, MJD, label ]

@@ -88,8 +88,8 @@ def _main():
 		if args.latency:
 			print "Latency: {} ms".format((end_time.mjd-start_time.mjd)*86400.0*1e3)
 
-		#if len(new_cands) > 0:
-			#write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
+		if len(new_cands) > 0:
+			write_cands(fname, new_cands)			# Write the grouped candidates to file in the same format
 
 # Open the file with given filename and return an array of candidates
 # 	The candidates are structured as an array with the following fields:
