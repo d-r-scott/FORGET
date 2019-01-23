@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 """
-grouping.py
+grouping_lite.py
 
 AUTHOR: David Scott [david.r.scott@graduate.curtin.edu.au]
 
 PURPOSE: Groups candidate events in given files by simply comparing all pairs to find coincident events
          Adapted from the clustering algorithm used in Heimdall by Ben Barsdell and Andrew Jameson
              https://sourceforge.net/p/heimdall-astro/code/ci/master/tree/Pipeline/label_candidate_clusters.cu
-         The structure of the algorithm draws inspiration from friends-of-friends used in FREDDA by Keith Bannister
 """
 
 import numpy as np
@@ -52,6 +51,9 @@ def _main():
 			new_cands = []
 
 		print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
+
+		if len(new_cands) > 0:
+			write_cands(fname, new_cands)
 
 # Open the file with given filename and return an array of candidates
 # 	The candidates are structured as an array with the following fields:
