@@ -44,7 +44,7 @@ def _main():
 	args = parser.parse_args()
 
 	for fname in args.files:
-		old_cands = open_file(fname, args)		# Open file and return all valid cands
+		old_cands = open_file(fname)		# Open file and return all valid cands
 
 		if len(old_cands) > 0:
 			new_cands = group(old_cands, args)		# Group candidates together and return a list of the groups
@@ -72,9 +72,11 @@ def open_file(fname):
 				while len(new_cand) <= mjd:
 					new_cand.append(0.0)
 
-				# Add a label field and number of candidates in group field
+				# Add new fields: label, num in group, rsq (less) and rsq (more)
 				new_cand.append(0)
 				new_cand.append(1)
+				new_cand.append(0)
+				new_cand.append(0)
 				cands.append(new_cand)
 
 	# Sort by S/N (descending)
@@ -84,35 +86,28 @@ def open_file(fname):
 	for i, cand in enumerate(cands):
 		cand[lbl] = i
 
-	return cands
+	return np.array(cands)
 
 # Iterate over the cands and group them with other cands that are nearby in time-DM-width space
 # The returned list of cands will contain only those in each group with the highest S/N
 def group(cand_list, args):
 	# For every cand, compare it to each other cand
 	# If the cands are within the time, DM, and width tolerances of each other, give them both the label of the cand with the highest S/N
-	for i in range(len(cand_list)):
-		for j in range(len(cand_list)):
-			if i != j:
-				t_diff  = abs(cand_list[i][t]  - cand_list[j][t])
-				dm_diff = abs(cand_list[i][dm] - cand_list[j][dm])
-				w_diff  = abs(cand_list[i][w]  - cand_list[j][w])
+	for i in range(len(cand_list)-1, -1, -1):	# Go backwards through list so you start with the brightest
+		# numpy vector operations
+		t_diff = np.abs(cand_list[:,t] - cand_list[i,t])
+		dm_diff = np.abs(cand_list[:,dm] - cand_list[i,dm])
+		w_diff = np.abs(cand_list[:,w] - cand_list[i,w])
 
-				if t_diff <= args.ttol and dm_diff <= args.dmtol and w_diff <= args.wtol:
-					# Give both cands the label of whichever is brightest
-					if cand_list[i][sn] >= cand_list [j][sn]:
-						cand_list[j][lbl] = cand_list[i][lbl]
-					else:	
-						# j brighter than i
-						cand_list[i][lbl] = cand_list[j][lbl]
+		# make binary numpy mask
+		nearby_mask = (t_diff <= args.ttol) & (dm_diff <= args.dmtol) & (w_diff <= args.wtol)
 
-	# We've found all the groups, now trace the label chains to give each group the same label
-	for cand in cand_list:
-		trace_equivalency_chain(cand, cand_list)
+		nearby = cand_list[nearby_mask]
+		cand_list[nearby_mask,lbl] = max(nearby[:,lbl])
 
 	# Count how many cands there are in each group
 	# Get the labels of each group by finding the unique labels in cand_list
-	labels = [ cand[lbl] for cand in cand_list ]
+	labels = [ int(cand[lbl]) for cand in cand_list ]
 	unique_labels = list(set(labels))
 	for label in unique_labels:
 		cand_list[label][ning] = labels.count(label)
@@ -139,24 +134,6 @@ def group(cand_list, args):
 
 	return new_cands
 
-# Move the cand along the label chain and set the imported cand's label to the label at the end of it
-# Return a list of the candidates in the chain
-def trace_equivalency_chain(cand, cand_list):
-	chain = []
-	while True:
-		chain.append(cand)
-		old_lbl = cand[lbl]
-		old_sn = cand[sn]
-		cand[ning] = cand_list[old_lbl][ning]
-		cand = cand_list[old_lbl]
-
-		if cand[lbl] == old_lbl and cand[sn] == old_sn:		# We've reached the end of the chain
-			# Set all labels to be the same
-			for link in chain:
-				link[lbl] = old_lbl
-			break
-
-
 """
 Determine the correlation coefficients for every group
 There will be two lines used to calculate these coefficients. Both will start at the brightest cand in
@@ -166,11 +143,11 @@ There will be two lines used to calculate these coefficients. Both will start at
 These coefficients could be used to determine if the group corresponds to a real FRB.
 """
 def det_corr_coefs(cand_list, unique_labels):
-
 	for label in unique_labels:
 		# Each label is the index of the brightest candidate in each group
 		# Get a list containing just the cands in the current group
-		group = [ cand for cand in cand_list if cand[lbl] == label ]
+		label_mask = cand_list[:,lbl] == label
+		group = cand_list[label_mask]
 
 		# Calculate R^2 for cands with start time and DM less than group's brightest cand
 		less_group = [ cand for cand in group if cand[t] <= cand_list[label][t] and cand[dm] <= cand_list[label][dm] ]
@@ -185,31 +162,32 @@ def det_corr_coefs(cand_list, unique_labels):
 		more_r_squared = calc_r_squared(np.array(more_ts), np.array(more_dms))
 
 		# Give brightest cand the R^2 values
-		cand_list[label].append(less_r_squared)
-		cand_list[label].append(more_r_squared)
-
+		cand_list[label,rsql] = less_r_squared
+		cand_list[label,rsqm] = more_r_squared
 
 # Calculate the correlation coefficient (R^2) of given data
 def calc_r_squared(x, y):
 	with np.errstate(divide='ignore', invalid='ignore'):	# Hide warning messages about zero division
-		x_min = min(x)
-		x_max = max(x)
-		y_min = min(y)
-		y_max = max(y)
+		if x.size > 0 and y.size > 0:   # Only calculate if there's actually any points
+			x_min = np.min(x)
+			x_max = np.max(x)
+			y_min = np.min(y)
+			y_max = np.max(y)
 
-		# Calculate gradient of line going from (x_min, y_min) to (x_max, y_max) and use it as a model
-		m = (y_max - y_min)/(x_max - x_min)
-		f = lambda i : m*(i - x_min) + y_min
+			# Calculate gradient of line going from (x_min, y_min) to (x_max, y_max) and use it as a model
+			m = (y_max - y_min)/(x_max - x_min)
+			f = lambda i : m*(i - x_min) + y_min
 
-		model_y = np.array([ f(i) for i in x ])
+			model_y = np.array([ f(i) for i in x ])
 
-		# Sums of squares
-		ss_res = np.sum(np.square(y - model_y))	# Residuals
-		ss_tot = np.sum(np.square(y - np.average(y)))	# Total
+			# Sums of squares
+			ss_res = np.sum(np.square(y - model_y)) # Residuals
+			ss_tot = np.sum(np.square(y - np.average(y)))   # Total
 
-		r_squared = 1 - ss_res/ss_tot
-
-		return r_squared
+			r_squared = 1 - ss_res/ss_tot
+			return r_squared
+		else:
+			return np.nan
 
 def write_cands(fname, cands):
 	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, number in group, R^2'
@@ -241,13 +219,15 @@ def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
 
 	cands.sort(key=lambda x: x[sn])
 
-	# Give each candidate a label corresponding to its initial position in the list
-	#for i, cand in enumerate(cands):
-		#cand.append(0)
-		#cand.append(1)
-		#cand[lbl] = i
+	# Give each candidate the extra fields it needs: label, num in group, rsq (less) and rsq (more)
+	for i, cand in enumerate(cands):
+		cand.append(0)
+		cand.append(1)
+		cand.append(0)
+		cand.append(0)
+		cand[lbl] = i
 
-	return group(cands, ext_args)
+	return group(np.array(cands), ext_args)
 
 if __name__ == '__main__':
 	_main()
