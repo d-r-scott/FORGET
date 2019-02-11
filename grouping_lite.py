@@ -60,7 +60,7 @@ def _main():
 # 	The candidates are structured as an array with the following fields:
 # 	[ S/N, sampno, secs from file start, width, idt, DM, beam number, MJD, label ]
 #	These are the fields that are assumed to be in the file, with the addition of the label field
-def open_file(fname, args):
+def open_file(fname):
 	cands = []
 	with open(fname, 'r') as f:
 		for i, line in enumerate(f):
@@ -234,9 +234,7 @@ def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
 	parser.add_argument(dest='files', nargs='+')
 
 	parse_str = '--dmmin ' + str(ext_dmmin) + ' --wmax ' + str(ext_wmax) + ' --snmin ' + str(ext_snmin)
-	if r_on:
-		parse_str = parse_str + ' -r --rsqmin ' + str(ext_rsqmin)
-
+	parse_str = parse_str + ' --rsqmin ' + str(ext_rsqmin)
 	parse_str = parse_str + ' not_a_real_file'
 
 	ext_args = parser.parse_args(parse_str.split())
@@ -244,10 +242,10 @@ def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
 	cands.sort(key=lambda x: x[sn])
 
 	# Give each candidate a label corresponding to its initial position in the list
-	for i, cand in enumerate(cands):
-		cand.append(0)
-		cand.append(1)
-		cand[lbl] = i
+	#for i, cand in enumerate(cands):
+		#cand.append(0)
+		#cand.append(1)
+		#cand[lbl] = i
 
 	return group(cands, ext_args)
 

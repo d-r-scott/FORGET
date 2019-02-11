@@ -256,8 +256,8 @@ def calc_r_squared(x, y):
 		return r_squared
 
 def plot_cands(old_cands, new_cands, args):
-	plt.style.use('dark_background')
-	colourmap='autumn'
+	#plt.style.use('dark_background')
+	colourmap='winter'
 	marker_size = 5
 
 	fig = plt.figure(figsize=(18, 24))
@@ -276,10 +276,10 @@ def plot_cands(old_cands, new_cands, args):
 	ax = fig.add_subplot(431, projection='3d')
 
 	ax.scatter(old_t, old_dm, old_w, c=old_sn, cmap=colourmap)
-	ax.scatter(new_t, new_dm, new_w, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+	ax.scatter(new_t, new_dm, new_w, marker='o', facecolors='none', edgecolors='black', s=marker_size*10)
 
 	ax.set_xlabel("Time (number of samples)")
-	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_ylabel(r"DM (pc cm$^-3$)")
 	ax.set_zlabel("Width (number of samples)")
 
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
@@ -293,12 +293,12 @@ def plot_cands(old_cands, new_cands, args):
 
 	# Error bars
 	for i in range(len(old_t)):
-		ax.plot([old_t[i]+args.ttol, old_t[i]-args.ttol], [old_dm[i], old_dm[i]], [old_w[i], old_w[i]], marker="_", c='white', alpha=0.1)
-		ax.plot([old_t[i], old_t[i]], [old_dm[i]+args.dmtol, old_dm[i]-args.dmtol], [old_w[i], old_w[i]], marker="_", c='white', alpha=0.1)
-		ax.plot([old_t[i], old_t[i]], [old_dm[i], old_dm[i]], [old_w[i]+args.wtol, old_w[i]-args.wtol], marker="_", c='white', alpha=0.1)
+		ax.plot([old_t[i]+args.ttol, old_t[i]-args.ttol], [old_dm[i], old_dm[i]], [old_w[i], old_w[i]], marker="_", c='black', alpha=0.5)
+		ax.plot([old_t[i], old_t[i]], [old_dm[i]+args.dmtol, old_dm[i]-args.dmtol], [old_w[i], old_w[i]], marker="_", c='black', alpha=0.5)
+		ax.plot([old_t[i], old_t[i]], [old_dm[i], old_dm[i]], [old_w[i]+args.wtol, old_w[i]-args.wtol], marker="_", c='black', alpha=0.5)
 
 	ax.set_xlabel("Time (number of samples)")
-	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_ylabel(r"DM (pc cm$^-3$)")
 	ax.set_zlabel("Width (number of samples)")
 
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
@@ -311,7 +311,7 @@ def plot_cands(old_cands, new_cands, args):
 	ax.scatter(new_t, new_dm, new_w, c=new_sn, cmap=colourmap)
 
 	ax.set_xlabel("Time (number of samples)")
-	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_ylabel(r"DM (pc cm$^-3$)")
 	ax.set_zlabel("Width (number of samples)")
 	
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
@@ -323,10 +323,10 @@ def plot_cands(old_cands, new_cands, args):
 	ax = fig.add_subplot(434)
 	ax.scatter(old_t, old_dm, c=old_sn, cmap=colourmap, s=marker_size)
 	ax.set_xlabel("Time (number of samples)")
-	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_ylabel(r"DM (pc $cm^-3$)")
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
 	ax.set_ylim([min(old_dm)-args.dmtol, max(old_dm)+args.dmtol])
-	ax.scatter(new_t, new_dm, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+	ax.scatter(new_t, new_dm, marker='o', facecolors='none', edgecolors='black', s=marker_size*10)
 
 	ax = fig.add_subplot(437)
 	ax.scatter(old_t, old_w, c=old_sn, cmap=colourmap, s=marker_size)
@@ -334,33 +334,33 @@ def plot_cands(old_cands, new_cands, args):
 	ax.set_ylabel("Width (number of samples)")
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
 	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
-	ax.scatter(new_t, new_w, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+	ax.scatter(new_t, new_w, marker='o', facecolors='none', edgecolors='black', s=marker_size*10)
 	
 	ax = fig.add_subplot(4,3,10)
 	ax.scatter(old_dm, old_w, c=old_sn, cmap=colourmap, s=marker_size)
-	ax.set_xlabel("DM (pc cm^-3)")
+	ax.set_xlabel(r"DM (pc cm$^-3$)")
 	ax.set_ylabel("Width (number of samples)")
 	ax.set_xlim([min(old_dm)-args.ttol, max(old_dm)+args.ttol])
 	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
-	ax.scatter(new_dm, new_w, marker='o', facecolors='none', edgecolors='white', s=marker_size*10)
+	ax.scatter(new_dm, new_w, marker='o', facecolors='none', edgecolors='black', s=marker_size*10)
 
 	# Before grouping with error bars
 	ax = fig.add_subplot(435)
-	ax.errorbar(old_t, old_dm, xerr=args.ttol, yerr=args.dmtol, fmt='o', c='white', ms=2, alpha=0.25)
+	ax.errorbar(old_t, old_dm, xerr=args.ttol, yerr=args.dmtol, fmt='o', c='black', ms=2, alpha=0.25)
 	ax.set_xlabel("Time (number of samples)")
-	ax.set_ylabel("DM (pc cm^-3)")
+	ax.set_ylabel(r"DM (pc cm$^-3$)")
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
 	ax.set_ylim([min(old_dm)-args.dmtol, max(old_dm)+args.dmtol])
 
 	ax = fig.add_subplot(438)
-	ax.errorbar(old_t, old_w, xerr=args.ttol, yerr=args.wtol, fmt='o', c='white', ms=2, alpha=0.25)
+	ax.errorbar(old_t, old_w, xerr=args.ttol, yerr=args.wtol, fmt='o', c='black', ms=2, alpha=0.25)
 	ax.set_xlabel("Time (number of samples)")
 	ax.set_ylabel("Width (number of samples)")
 	ax.set_xlim([min(old_t)-args.ttol, max(old_t)+args.ttol])
 	ax.set_ylim([min(old_w)-args.dmtol, max(old_w)+args.dmtol])
 	
 	ax = fig.add_subplot(4,3,11)
-	ax.errorbar(old_dm, old_w, xerr=args.dmtol, yerr=args.wtol, fmt='o', c='white', ms=2, alpha=0.25)
+	ax.errorbar(old_dm, old_w, xerr=args.dmtol, yerr=args.wtol, fmt='o', c='black', ms=2, alpha=0.25)
 	ax.set_xlabel("DM (pc cm^-3)")
 	ax.set_ylabel("Width (number of samples)")
 	ax.set_xlim([min(old_dm)-args.ttol, max(old_dm)+args.ttol])
