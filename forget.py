@@ -198,7 +198,7 @@ def write_cands(fname, cands):
 	np.savetxt(fname+'.forget', npcands, fmt=formats, header=header)
 
 # Allows use outside of this file
-def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
+def external_forget(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.grouped', formatter_class=ArgumentDefaultsHelpFormatter)
 	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=3)
