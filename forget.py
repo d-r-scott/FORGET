@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 """
-grouping_lite.py
+forget.py
 
 AUTHOR: David Scott [david.r.scott@graduate.curtin.edu.au]
 
-PURPOSE: Groups candidate events in given files by simply comparing all pairs to find coincident events
-         Adapted from the clustering algorithm used in Heimdall by Ben Barsdell and Andrew Jameson
+The FREDDA Output Real-time Grouped Event Test
+	Grouping method adapted from the clustering algorithm used in Heimdall by Ben Barsdell and Andrew Jameson
              https://sourceforge.net/p/heimdall-astro/code/ci/master/tree/Pipeline/label_candidate_clusters.cu
-         The structure of the algorithm draws inspiration from friends-of-friends used in FREDDA by Keith Bannister
+	The structure of the algorithm draws inspiration from friends-of-friends used in FREDDA by Keith Bannister
 """
 
 import numpy as np
@@ -31,7 +31,7 @@ __author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
 def _main():
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.grouped.\n\nTo use in another python script, simply import external_grouping from this script, and call with the syntax:\nnew_cands = external_grouping(cands, dmmin, wmax, snmin, rsqmin)', formatter_class=ArgumentDefaultsHelpFormatter)
+	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.forget. To use in another python script, simply import external_forget from this script, and call with the syntax: new_cands = external_grouping(cands, dmmin, wmax, snmin, rsqmin)', formatter_class=ArgumentDefaultsHelpFormatter)
 	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=3)
 	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=2.)
 	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=2)
@@ -195,7 +195,7 @@ def write_cands(fname, cands):
 	floatf = '%0.2f'
 	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, intf, floatf, floatf)
 	npcands = np.array(cands)
-	np.savetxt(fname+'.grouped', npcands, fmt=formats, header=header)
+	np.savetxt(fname+'.forget', npcands, fmt=formats, header=header)
 
 # Allows use outside of this file
 def external_grouping(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
