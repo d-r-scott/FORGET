@@ -27,18 +27,27 @@ ning= 9 	# Number of candidates in the group this candidate represens
 rsql= 10	# R^2 for cands with time and dm less than brightest in group
 rsqm= 11	# R^2 for cands with time and dm more than brightest in group
 
+# Default parameter values
+dft_ttol = 3
+dft_dmtol = 2.
+dft_wtol = 2
+dft_dmmin = 0.
+dft_wmax = 20
+dft_snmin = 0.
+dft_rsqmin = -100.
+
 __author__ = "David Scott <david.r.scott@graduate.curtin.edu.au>"
 
 def _main():
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
-	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.forget. To use in another python script, simply import external_forget from this script, and call with the syntax: new_cands = external_grouping(cands, dmmin, wmax, snmin, rsqmin)', formatter_class=ArgumentDefaultsHelpFormatter)
-	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=3)
-	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=2.)
-	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=2)
-	parser.add_argument('--dmmin', type=float, help='Minimum DM to return (pc/cm3)', default=0.)
-	parser.add_argument('--wmax', type=int, help='Maximum width to return (time samples)', default=20)
-	parser.add_argument('--snmin', type=float, help='Minimum S/N to return', default=0.)
-	parser.add_argument('--rsqmin', type=float, help='Minimum R^2 to return', default=-100.)
+	parser = ArgumentParser(description='Fredda Output Real-time Grouped Event Test. Input is any file containing candidates, output is to <in_filename>.forget. To use in another python script, simply import external_forget from this script, and call with the syntax: new_cands = external_grouping(cands[ttol, dmtol, wtol, dmmin, wmax, snmin, rsqmin])', formatter_class=ArgumentDefaultsHelpFormatter)
+	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=dft_ttol)
+	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=dft_dmtol)
+	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=dft_wtol)
+	parser.add_argument('--dmmin', type=float, help='Minimum DM to return (pc/cm3)', default=dft_dmmin)
+	parser.add_argument('--wmax', type=int, help='Maximum width to return (time samples)', default=dft_wmax)
+	parser.add_argument('--snmin', type=float, help='Minimum S/N to return', default=dft_snmin)
+	parser.add_argument('--rsqmin', type=float, help='Minimum R^2 to return', default=dft_rsqmin)
 
 	parser.add_argument(dest='files', nargs='+')
 	args = parser.parse_args()
@@ -198,22 +207,28 @@ def write_cands(fname, cands):
 	np.savetxt(fname+'.forget', npcands, fmt=formats, header=header)
 
 # Allows use outside of this file
-def external_forget(cands, ext_dmmin, ext_wmax, ext_snmin, ext_rsqmin):
+def external_forget(cands, ttol=dft_ttol, dmtol=dft_dmtol, wtol=dft_wtol, dmmin=dft_dmmin, wmax=dft_wmax, snmin=dft_snmin, rsqmin=dft_rsqmin):
 	from argparse import ArgumentParser, ArgumentDefaultsHelpFormatter
 	parser = ArgumentParser(description='Group candidate events. Input is any file containing candidates, output is to <in_filename>.grouped', formatter_class=ArgumentDefaultsHelpFormatter)
-	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=3)
-	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=2.)
-	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=2)
-	parser.add_argument('--dmmin', type=float, help='Minimum DM to return (pc/cm3)', default=0.)
-	parser.add_argument('--wmax', type=int, help='Maximum width to return (time samples)', default=20)
-	parser.add_argument('--snmin', type=float, help='Minimum S/N to return', default=0.)
-	parser.add_argument('--rsqmin', type=float, help='Minimum R^2 to return', default=-100.)
+	parser.add_argument('-t', '--ttol', type=int, help='Time tolerance - how many time samples apart are coincident events?', default=dft_ttol)
+	parser.add_argument('-d', '--dmtol', type=float, help='DM tolerance - how many DM units (in pc cm^-3) apart are coincident events?', default=dft_dmtol)
+	parser.add_argument('-w', '--wtol', type=int, help='Width tolerance - how close do the widths (in number of time samples) have to be for events to be coincident?', default=dft_wtol)
+	parser.add_argument('--dmmin', type=float, help='Minimum DM to return (pc/cm3)', default=dft_dmmin)
+	parser.add_argument('--wmax', type=int, help='Maximum width to return (time samples)', default=dft_wmax)
+	parser.add_argument('--snmin', type=float, help='Minimum S/N to return', default=dft_snmin)
+	parser.add_argument('--rsqmin', type=float, help='Minimum R^2 to return', default=dft_rsqmin)
 
 	parser.add_argument(dest='files', nargs='+')
 
-	parse_str = '--dmmin ' + str(ext_dmmin) + ' --wmax ' + str(ext_wmax) + ' --snmin ' + str(ext_snmin)
-	parse_str = parse_str + ' --rsqmin ' + str(ext_rsqmin)
-	parse_str = parse_str + ' not_a_real_file'
+	parse_str = ''
+	parse_str += '-t %d ' % ttol
+	parse_str += '-d %f ' % dmtol
+	parse_str += '-w %d ' % wtol
+	parse_str += '--dmmin %f ' % dmmin
+	parse_str += '--wmax %d ' % wmax
+	parse_str += '--snmin %f ' % snmin
+	parse_str += '--rsqmin %f ' % rsqmin
+	parse_str += 'not_a_real_file'
 
 	ext_args = parser.parse_args(parse_str.split())
 
