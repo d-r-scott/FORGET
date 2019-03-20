@@ -60,7 +60,7 @@ def _main():
 		else:
 			new_cands = []
 
-		print "Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands))
+		print("Reduced number of candidates in %s from %d to %d" % (fname, len(old_cands), len(new_cands)))
 
 		if len(new_cands) > 0:
 			write_cands(fname, new_cands)
