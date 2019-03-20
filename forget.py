@@ -69,7 +69,7 @@ def _main():
 # 	The candidates are structured as an array with the following fields:
 # 	[ S/N, sampno, secs from file start, width, idt, DM, beam number, MJD, label ]
 #	These are the fields that are assumed to be in the file, with the addition of the label field
-def open_file(fname):
+def open_file(fname, add_fields=True):
 	cands = []
 	with open(fname, 'r') as f:
 		for i, line in enumerate(f):
@@ -81,12 +81,14 @@ def open_file(fname):
 				while len(new_cand) <= mjd:
 					new_cand.append(0.0)
 
-				# Add new fields: label, num in group, rsq (less) and rsq (more)
-				new_cand.append(0)
-				new_cand.append(1)
-				new_cand.append(0)
-				new_cand.append(0)
-				cands.append(new_cand)
+				#dont always add new fields in case we're importing this function
+				if add_fields:
+					# Add new fields: label, num in group, rsq (less) and rsq (more)
+					new_cand.append(0)
+					new_cand.append(1)
+					new_cand.append(0)
+					new_cand.append(0)
+					cands.append(new_cand)
 
 	# Sort by S/N (descending)
 	cands.sort(key=lambda x: x[sn])
