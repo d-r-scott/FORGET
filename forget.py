@@ -69,7 +69,7 @@ def _main():
 # 	The candidates are structured as an array with the following fields:
 # 	[ S/N, sampno, secs from file start, width, idt, DM, beam number, MJD, label ]
 #	These are the fields that are assumed to be in the file, with the addition of the label field
-def open_file(fname, add_fields=True):
+def open_file(fname, add_fields=True, sort_idx=sn):
 	cands = []
 	with open(fname, 'r') as f:
 		for i, line in enumerate(f):
@@ -77,25 +77,27 @@ def open_file(fname, add_fields=True):
 				# In case the file has more columns than we need, trim the extras off the end
 				new_cand = map(float, line.split()[0:mjd])
 
-				# Sometimes there's no mjd field by default, so we need to add it
-				while len(new_cand) <= mjd:
-					new_cand.append(0.0)
-
 				#dont always add new fields in case we're importing this function
 				if add_fields:
+					# Sometimes there's no mjd field by default, so we need to add it
+					while len(new_cand) <= mjd:
+						new_cand.append(0.0)
+
 					# Add new fields: label, num in group, rsq (less) and rsq (more)
 					new_cand.append(0)
 					new_cand.append(1)
 					new_cand.append(0)
 					new_cand.append(0)
-					cands.append(new_cand)
+				
+				cands.append(new_cand)
 
 	# Sort by S/N (descending)
-	cands.sort(key=lambda x: x[sn])
+	cands.sort(key=lambda x: x[sort_idx])
 
 	# Give each candidate a label corresponding to its rank when ordered by S/N
-	for i, cand in enumerate(cands):
-		cand[lbl] = i
+	if add_fields:
+		for i, cand in enumerate(cands):
+			cand[lbl] = i
 
 	return np.array(cands)
 
