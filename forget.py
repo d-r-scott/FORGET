@@ -202,13 +202,13 @@ def calc_r_squared(x, y):
 		else:
 			return np.nan
 
-def write_cands(fname, cands):
+def write_cands(fname, cands, suffix='.forget'):
 	header = 'S/N, sampno, secs from file start, boxcar, idt, dm, beamno, mjd, label, number in group, R^2'
 	intf = '%d'
 	floatf = '%0.2f'
 	formats = (floatf, intf, floatf, intf, intf, floatf, intf, '%0.15f', intf, intf, floatf, floatf)
 	npcands = np.array(cands)
-	np.savetxt(fname+'.forget', npcands, fmt=formats, header=header)
+	np.savetxt(fname+suffix, npcands, fmt=formats, header=header)
 
 # Allows use outside of this file
 def external_forget(cands, ttol=dft_ttol, dmtol=dft_dmtol, wtol=dft_wtol, dmmin=dft_dmmin, wmax=dft_wmax, snmin=dft_snmin, rsqmin=dft_rsqmin):
